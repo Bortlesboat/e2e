@@ -59,6 +59,7 @@ export class AttemptSession {
   private media: WebMedia;
   /** The emulation each page got as it appeared, so the attempt's own page is ready before it shows. */
   private readonly emulated = new WeakMap<Page, Promise<void>>();
+  /** The active page being opened for the current binding, shared by concurrent callers. */
   private pendingPage: { readonly binding: SessionBinding; readonly work: Promise<Page> } | undefined;
 
   constructor(private readonly options: SessionOptions) {
@@ -207,7 +208,7 @@ export class AttemptSession {
     await work;
   }
 
-  /** Shares active-page creation in call order, so a response wait can register before the first navigation. */
+  /** Opens the active page once; concurrent callers share it. */
   async ensurePage(): Promise<Page> {
     const binding = this.current();
     if (binding.page !== null && !binding.page.isClosed()) return binding.page;
